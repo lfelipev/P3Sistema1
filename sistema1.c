@@ -5,24 +5,177 @@
 void userRegister();
 void userModify();
 //void userDelete();
+void userSearch();
+void resourceRegister();
+void resourceAlocate();
 
 typedef struct
 {
-    int code;
-    int allocationStatus;
-    int grade;
     char name[50];
-    int activityStatus;
+    char email[50];
+    int grade;
 }user;
 
 typedef struct
 {
-    int id;
+    char id[50];
     int iDay, iMonth, iYear, iHour;
     int fDay, fMonth, fYear, fHour;
-    char responsible[20];
+    char responsible[50];
     int status;
 }resource;
+
+void resourceFunction()
+{
+    int choose = 0;
+    printf("----------- Menu de Recursos -----------\n");
+    printf("[1]Cadastrar Recurso\n");
+    printf("[2]Alocar Recurso\n");
+    printf("[3]Consultar Recurso\n");
+    printf("[4]Voltar\n");
+    scanf("%i", &choose);
+    fflush(stdin);
+    
+    switch(choose)
+    {
+        case 1:
+            resourceRegister(); break;
+        case 2:
+            resourceAlocate(); break;
+        /*case 3:
+            resourceSearch(); break; */
+        case 4:
+            break;
+        default:
+            printf("Opção inválida:\n");
+    }   
+}
+
+void resourceAlocate()
+{
+    char resourceName[50];
+    int i;
+    
+    /** Menu da Tela **/
+    printf("------ Menu Alocação de Recurso ------\n");
+    
+    resource *resourceVector;
+    FILE *resourceFile;
+    int n;
+    
+    resourceFile = fopen("Resource_Register.txt", "r+b");
+    
+    if(resourceFile == NULL)
+    {
+        resourceFile = fopen("Resource_Register.txt", "w+b");
+        n = 0;
+    }
+    else 
+    {
+        fread(&n, sizeof(int), 1, resourceFile);
+        resourceVector = (resource *) malloc(sizeof(resource)*n);
+        fread(resourceVector, sizeof(resource), n, resourceFile);
+        printf("Escreva o nome do recurso a ser alugado:\n");
+        scanf("%s", resourceName);
+        
+        for(i=0; i<n; ++i)
+        {
+            if(strcmp(resourceName, resourceVector[i].id) == 0)
+            {
+                if(resourceVector[i].status != 1) 
+                {
+                    printf("O recurso não pode ser alocado\n");
+                }
+                else if (resourceVector[i].status == 1) 
+                {
+                    printf("\nInsira seu Nome: "); scanf("%s", resourceVector[i].responsible);
+                    fflush(stdin);
+                    printf("\nInsira Data de Início da Alocação: dd/mm/yy h: "); scanf("%d/%d/%d %d", &resourceVector[i].iDay, 
+                                                                                                        &resourceVector[i].iMonth, 
+                                                                                                        &resourceVector[i].iYear, 
+                                                                                                        &resourceVector[i].iHour);
+                    printf("\nData de Término da Alocação: dd/mm/yy h: "); scanf("%d/%d/%d %d", &resourceVector[i].fDay, 
+                                                                                                    &resourceVector[i].fMonth, 
+                                                                                                    &resourceVector[i].fYear, 
+                                                                                                    &resourceVector[i].fHour);
+                    fflush(stdin);
+                    resourceVector[i].status = 2;
+                    printf("\nO Recurso está Alocado!\n");
+                }  
+            }
+        }
+        fclose(resourceFile);
+        
+        resourceFile = fopen("Resource_Register.txt", "r+b");
+        
+        fwrite(&n, sizeof(int), 1, resourceFile);
+        fwrite(resourceVector, sizeof(resource), n, resourceFile);
+        
+        /** Problema para liberar a memória (free(userVector) **/
+        fclose(resourceFile);
+    }
+}
+
+void resourceRegister()
+{
+    resource *resourceVector;
+    int n; //Quantidade de recursos
+    FILE *resourceFile;
+    
+    resourceFile = fopen("Resource_Register.txt","r+b");
+    
+    if(resourceFile == NULL) //Caso o arquivo não exista
+    {
+        resourceFile = fopen("Resource_Register.txt","w+b");
+        n = 0;
+    }
+    else //Caso exista, lê o vetor de usuários
+    {
+        fread(&n, sizeof(int), 1, resourceFile);
+        resourceVector = (resource *) malloc(sizeof(resource)*n);
+        fread(resourceVector, sizeof(resource), n, resourceFile);
+    }
+    
+    if(n==0) //Abre espaço na memória caso não exista usuário
+    {
+        resourceVector = (resource *)malloc(sizeof(resource));
+    }
+    else //Realoca espaço na memória para novo usuário
+    {
+        resourceVector = (resource *)realloc(resourceVector, sizeof(resource)*(n+1));
+    }
+    
+    /** Menu na Tela **/
+    printf("------ Menu Registro de Recurso ------\n");
+    printf("\nIdentificação: "); scanf("%s", resourceVector[n].id);
+    fflush(stdin);
+    printf("\nData de Início: dd/mm/yy h: "); scanf("%d/%d/%d %d", &resourceVector[n].iDay, 
+                                                                        &resourceVector[n].iMonth, 
+                                                                        &resourceVector[n].iYear, 
+                                                                        &resourceVector[n].iHour);
+    printf("\nData de Término: dd/mm/yy h: "); scanf("%d/%d/%d %d", &resourceVector[n].fDay, 
+                                                                        &resourceVector[n].fMonth, 
+                                                                        &resourceVector[n].fYear, 
+                                                                        &resourceVector[n].fHour);
+                                         
+    printf("\nResponsável: "); scanf("%s", resourceVector[n].responsible);
+    fflush(stdin);
+    resourceVector[n].status = 1;
+    printf("\nRegistro concluido!\n");
+    
+    n++;
+    
+    fclose(resourceFile);
+    
+    resourceFile = fopen("Resource_Register.txt", "r+b");
+    
+    fwrite(&n, sizeof(int), 1, resourceFile);
+    fwrite(resourceVector, sizeof(resource), n, resourceFile);
+    
+    fclose(resourceFile);
+    
+    free(resourceVector);
+}
 
 void userFunction()
 {
@@ -30,8 +183,9 @@ void userFunction()
     printf("----------- Menu do Usuário -----------\n");
     printf("[1]Cadastro\n");
     printf("[2]Alterar\n");
-    //printf("[3]Excluir\n");
-    printf("[3]Voltar\n");
+    printf("[3]Consultar\n");
+    printf("[3]Excluir\n");
+    printf("[4]Voltar\n");
     scanf("%i", &choose);
     fflush(stdin);
     
@@ -42,8 +196,10 @@ void userFunction()
         case 2:
             userModify(); break;
         /*case 3:
-            userDelete(); break;*/
+            userDelete(); break; */
         case 3:
+            userSearch(); break;
+        case 4:
             break;
         default:
             printf("Opção inválida:\n");
@@ -82,18 +238,17 @@ void userRegister()
     
     /** Menu na Tela **/
     printf("------ Menu Registro de Usuário ------\n");
-    printf("\nUsuário %d", n);
     printf("\nNome: "); scanf("%s", userVector[n].name);
     fflush(stdin);
+    printf("Email: "); scanf("%s", userVector[n].email);
     printf("Selecione o Grau: \n");
-    printf("[1]Aluno\n");
+    printf("[1]Graduando\n");
     printf("[2]Mestre\n");
     printf("[3]Doutor\n");
     printf("[4]Professor\n");
     printf("[5]Pesquisador\n");
     scanf("%i", &userVector[n].grade);
     fflush(stdin);
-    userVector[n].code = n;
     printf("\nRegistro concluido!\n");
     
     n++;
@@ -141,9 +296,9 @@ void userModify()
         {
             if(strcmp(name, userVector[i].name) == 0)
             {
-                printf("\nUser %d", userVector[i].code);
                 printf("\nNome: "); scanf("%s", userVector[i].name);
                 fflush(stdin);
+                printf("Email: "); scanf("%s", userVector[i].email);
                 printf("Selecione o Grau: \n");
                 printf("[1]Aluno\n");
                 printf("[2]Mestre\n");
@@ -163,6 +318,55 @@ void userModify()
         fwrite(userVector, sizeof(user), n, usersFile);
         
         /** Problema para liberar a memória (free(userVector) **/
+        fclose(usersFile);
+    }
+}
+
+void userSearch() 
+{
+    char name[50];
+    int i;
+    user *userVector;
+    FILE *usersFile;
+    int n;
+    
+    /** Menu da Tela **/
+    printf("------ Menu Consulta de Usário ------\n");
+      
+    usersFile = fopen("User_Register.txt", "r+b");
+    
+    if(usersFile == NULL)
+    {
+        usersFile = fopen("User_Register.txt", "w+b");
+        n = 0;
+    }
+    else 
+    {
+        fread(&n, sizeof(int), 1, usersFile);
+        userVector = (user *) malloc(sizeof(user)*n);
+        fread(userVector, sizeof(user), n, usersFile);
+        printf("Escreva o nome do usuário a ser consultado:\n");
+        scanf("%s", name);
+        
+        for(i=0; i<n; ++i)
+        {
+            if(strcmp(name, userVector[i].name) == 0)
+            {
+                printf("\nNome: %s", userVector[i].name);
+                fflush(stdin);
+                printf("\nEmail: %s", userVector[i].email); 
+                printf("\nRecursos Alocados: \n");
+                printf("\nOperação concluida!\n");
+            }
+        }
+        fclose(usersFile);
+        
+        usersFile = fopen("User_Register.txt", "r+b");
+        
+        fwrite(&n, sizeof(int), 1, usersFile);
+        fwrite(userVector, sizeof(user), n, usersFile);
+        
+        free(userVector);
         fclose(usersFile);
     }
 }
@@ -191,7 +395,7 @@ void userModify()
         fread(userVector, sizeof(user), n, usersFile);
         
         printf("------ Menu Deletar Usuário ------\n");
-        printf("Escreva o nome do usuário a ser alterado:\n");
+        printf("Escreva o nome do usuário a ser excluido:\n");
         scanf("%s", name);
         fflush(stdin);
         
@@ -205,14 +409,25 @@ void userModify()
                 
                 if(buffer == 1)
                 {
-                    userVector[i].name = 0;
+                    userVector = (user *)realloc(userVector, sizeof(user)*(n-1));
+                    
                     printf("Usuário Excluido.\n");
                 }
             }
             printf("saiu");
         }
+        --n;
+        fclose(usersFile);
+        
+        usersFile = fopen("User_Register.txt", "r+b");
+        
+        fwrite(&n, sizeof(int), 1, usersFile);
+        fwrite(userVector, sizeof(user), n, usersFile);
+        
+        /** Problema para liberar a memória (free(userVector) **/
+        /*fclose(usersFile);
     }
-}*/
+} */
 
 /** Função Principal **/
 int main () 
@@ -234,8 +449,8 @@ int main ()
             case 1:
                 userFunction(); break;
             case 2:
-               /* resourceFunction(); break;
-            case 3:
+                resourceFunction(); break;
+            /*case 3:
                 report(); break;*/
             case 4:
                 return;
