@@ -1,0 +1,5 @@
+Falha de segmentação na função "Alterar", logo após digitar o nome do usuário a ser alterado. (Corrigido na função strcmp)
+Falha de segmentação na função "Alterar", dentro do for() antes de alterar o userVector[n].name.
+Erro 'Double free corruption' no final da função de "Alterar", o problema acontece ao utilizar a função free(userVector); Pode
+ser que este ponteiro já tenha sido liberado, ou não foi alocado dinamicamente; A remoção da função foi a alternativa usada enquanto
+não for encontrado o verdadeiro erro.
